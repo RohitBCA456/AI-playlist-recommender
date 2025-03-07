@@ -25,11 +25,34 @@ const facialRecognition = async (req, res) => {
     );
 
     const result = await model.generateContent([systemMessage, imagePart]);
-    console.log(result.response.text());
-    res.status(200).json({
-      data: result.response.text(),
-      mesage: "Mood fetched successfully.",
-    });
+    const mood = result.response.text();
+    if (!mood || !moodToGenre[mood.toLowerCase().trim()]) {
+      return res.status(400).json({
+        error: "Invalid mood. Try: happy, sad, energetic, calm, romantic.",
+      });
+    }
+
+    const accessToken = await getAccessToken();
+    const genre = moodToGenre[mood.toLowerCase()];
+
+    const response = await axios.get(
+      `https://api.spotify.com/v1/search?q=${genre}&type=playlist&limit=5`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    const validPlaylists = response.data.playlists.items.filter(
+      (item) => item !== null
+    );
+
+    const playlists = validPlaylists.map((playlist) => ({
+      name: playlist.name || "Unknown Name",
+      url: playlist.external_urls?.spotify || "#",
+      image: playlist.images?.[0]?.url || "No Image Available",
+    }));
+
+    res
+      .status(200)
+      .json({ playlist: playlists, message: "Playlist fetched successfuly." });
   } catch (error) {
     console.log(error);
   }
