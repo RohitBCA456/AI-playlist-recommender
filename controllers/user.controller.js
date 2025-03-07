@@ -5,7 +5,7 @@ const facialRecognition = async (req, res) => {
   try {
     const facialExpression = req.file;
     const systemMessage =
-      "Analyze the human expression in the provided image and respond with only ONE word: normal, happy, sad, depressed, or excited. Do not provide any extra text.";
+      "Analyze the human expression in the provided image and respond with only ONE word: happy, sad, energetic, calm or romantic. Do not provide any extra text.";
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
