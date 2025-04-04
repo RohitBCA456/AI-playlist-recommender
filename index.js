@@ -1,5 +1,7 @@
 import { app } from "./app.js";
 import { connectDB } from "./db/database.js";
+import dotenv from "dotenv";
+dotenv.config({ path: "./.env" });
 
 connectDB()
   .then(() => {
@@ -15,7 +17,3 @@ connectDB()
     console.error("Error connecting to the database...", err);
     process.exit(1);
   });
-
-export default async function handler(req, res) {
-  return app(req, res);
-}
