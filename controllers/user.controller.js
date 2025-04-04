@@ -12,6 +12,7 @@ const facialRecognition = async (req, res) => {
     }
 
     console.log("Uploading image to Cloudinary...");
+    console.log("File path before upload:", facialExpression.path);
     const cloudinaryResponse = await uploadOnCloudinary(facialExpression.path);
 
     if (!cloudinaryResponse || !cloudinaryResponse.secure_url) {
