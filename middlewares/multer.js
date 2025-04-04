@@ -1,17 +1,18 @@
 import multer from "multer";
-import fs from "fs";
 import path from "path";
+import fs from "fs";
 
-// Ensure uploads directory exists
-const uploadDir = path.join(process.cwd(), "uploads");
+// Use `/tmp/` instead of `/var/task/uploads`
+const uploadDir = "/tmp/uploads";
 
+// Ensure the `/tmp/uploads` directory exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir); // Save to the existing 'uploads' directory
+    cb(null, uploadDir); // Save to `/tmp/uploads/`
   },
   filename: (req, file, cb) => {
     const uniqueName = `${Date.now()}-${file.originalname}`;
