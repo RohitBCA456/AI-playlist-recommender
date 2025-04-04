@@ -1,17 +1,20 @@
 import mongoose from "mongoose";
 
-const connectDB = async (req, res) => {
+const connectDB = async () => {
   try {
-    const connectionInstance = await mongoose.connect(
-      `${process.env.MONGO_URL}/${process.env.DB_NAME}`,
-    );
-    console.log(
-      "Connected to the database... || HOSTNAME: ",
-      connectionInstance.connection.host
-    );
+    const dbURL = `${process.env.MONGO_URL}/${process.env.DB_NAME}`;
+    
+    const connectionInstance = await mongoose.connect(dbURL, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 50000,
+      connectTimeoutMS: 50000,
+    });
+
+    console.log("Connected to the database... || HOSTNAME:", connectionInstance.connection.host);
   } catch (error) {
-          console.error("Error connecting to the database: ", error);
-        res.status(500).send("Server error, could not connect to the database.");
+    console.error("Error connecting to the database:", error);
+    process.exit(1);
   }
 };
 
