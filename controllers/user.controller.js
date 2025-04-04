@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { uploadOnCloudinary } from "../utility/cloudinary.js";
 import * as fs from "node:fs";
 import axios from "axios";
 import { Playlist } from "../models/user.model.js";
@@ -6,31 +7,33 @@ import { Playlist } from "../models/user.model.js";
 const facialRecognition = async (req, res) => {
   try {
     const facialExpression = req.file;
-    console.log("Image received:", facialExpression);
 
     if (!facialExpression) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
+    console.log("Uploading image to Cloudinary...");
+    const cloudinaryResponse = await uploadOnCloudinary(facialExpression.path);
+
+    if (!cloudinaryResponse || !cloudinaryResponse.secure_url) {
+      return res.status(500).json({ error: "Failed to upload image to Cloudinary" });
+    }
+
+    const imageUrl = cloudinaryResponse.secure_url; // Cloudinary image URL
+    console.log("Image uploaded to Cloudinary:", imageUrl);
+
     const systemMessage =
-      "Analyze the human expression in the provided image and respond with only ONE word: happy, sad, energetic, calm or romantic. Do not provide any extra text.";
+      "Analyze the human expression in the provided image and respond with only ONE word: happy, sad, energetic, calm, or romantic. Do not provide any extra text.";
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    function fileToGenerativePart(path, mimeType) {
-      return {
-        inlineData: {
-          data: Buffer.from(fs.readFileSync(path)).toString("base64"),
-          mimeType,
-        },
-      };
-    }
-
-    const imagePart = fileToGenerativePart(
-      facialExpression.path,
-      facialExpression.mimetype
-    );
+    const imagePart = {
+      inlineData: {
+        data: imageUrl, // Send the Cloudinary URL instead of local file data
+        mimeType: facialExpression.mimetype,
+      },
+    };
 
     console.log("Sending image to Gemini AI...");
     const result = await model.generateContent([systemMessage, imagePart]);
@@ -54,32 +57,25 @@ const facialRecognition = async (req, res) => {
     const randomOffset = Math.floor(Math.random() * 50);
 
     const response = await axios.get(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-        genre
-      )}&type=playlist&limit=10&offset=${randomOffset}`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(genre)}&type=playlist&limit=10&offset=${randomOffset}`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     console.log("Spotify API Response:", response.data);
 
-    const validPlaylists = response.data.playlists.items.filter(
-      (item) => item !== null
-    );
+    const validPlaylists = response.data.playlists.items.filter((item) => item !== null);
 
     const playlists = validPlaylists.map((playlist) => ({
       name: playlist.name || "Unknown Name",
       url: playlist.external_urls?.spotify || "#",
       image: playlist.images?.[0]?.url || "No Image Available",
-      mood, // Save the mood associated with the playlist
+      mood,
     }));
 
     console.log(playlists);
 
-    // Save playlists to the database
     await Playlist.insertMany(playlists);
     console.log("Playlists saved to the database.");
-
-    fs.unlinkSync(facialExpression.path);
 
     return res.status(200).json({ playlists });
   } catch (error) {
