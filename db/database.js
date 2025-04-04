@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
-    const dbURL = `${process.env.MONGO_URL}/${process.env.DB_NAME}`;
+    const dbURL = `${process.env.MONGO_URL}?retryWrites=true&w=majority&ssl=true/${process.env.DB_NAME}`;
     
     const connectionInstance = await mongoose.connect(dbURL, {
       useNewUrlParser: true,
