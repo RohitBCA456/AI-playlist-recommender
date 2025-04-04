@@ -26,12 +26,14 @@ const facialRecognition = async (req, res) => {
       imageUrl,
       facialExpression.mimetype
     );
-    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
-    if (!base64Data) {
-      return res
-        .status(500)
-        .json({ error: "Failed to convert image to Base64" });
+    
+    if (!base64Image) {
+      return res.status(500).json({ error: "Failed to convert image to Base64" });
     }
+    
+    // Remove the prefix like "data:image/png;base64," and keep only the raw Base64
+    const rawBase64 = base64Image.split(",")[1];
+    
 
     console.log("Sending Base64 image to Gemini AI...");
 
@@ -43,7 +45,7 @@ const facialRecognition = async (req, res) => {
 
     const imagePart = {
       inlineData: {
-        data: base64Data, // 👈 Now includes MIME type
+        data: rawBase64, // 👈 Now includes MIME type
         mimeType: facialExpression.mimetype,
       },
     };
