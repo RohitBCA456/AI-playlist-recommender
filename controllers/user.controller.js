@@ -1,6 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { uploadOnCloudinary } from "../utility/cloudinary.js";
-import * as fs from "node:fs";
 import axios from "axios";
 import { Playlist } from "../models/user.model.js";
 
@@ -16,7 +15,9 @@ const facialRecognition = async (req, res) => {
     const cloudinaryResponse = await uploadOnCloudinary(facialExpression.path);
 
     if (!cloudinaryResponse || !cloudinaryResponse.secure_url) {
-      return res.status(500).json({ error: "Failed to upload image to Cloudinary" });
+      return res
+        .status(500)
+        .json({ error: "Failed to upload image to Cloudinary" });
     }
 
     const imageUrl = cloudinaryResponse.secure_url; // Cloudinary image URL
@@ -57,13 +58,17 @@ const facialRecognition = async (req, res) => {
     const randomOffset = Math.floor(Math.random() * 50);
 
     const response = await axios.get(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(genre)}&type=playlist&limit=10&offset=${randomOffset}`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+        genre
+      )}&type=playlist&limit=10&offset=${randomOffset}`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     console.log("Spotify API Response:", response.data);
 
-    const validPlaylists = response.data.playlists.items.filter((item) => item !== null);
+    const validPlaylists = response.data.playlists.items.filter(
+      (item) => item !== null
+    );
 
     const playlists = validPlaylists.map((playlist) => ({
       name: playlist.name || "Unknown Name",
@@ -183,7 +188,9 @@ const getPlaylist = async (req, res) => {
     console.log("All playlists deleted from the database.");
   } catch (error) {
     console.error("Error fetching playlists:", error.message);
-    res.status(500).json({ error: "Failed to fetch playlists from the database." });
+    res
+      .status(500)
+      .json({ error: "Failed to fetch playlists from the database." });
   }
 };
 
