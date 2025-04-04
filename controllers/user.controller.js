@@ -6,23 +6,33 @@ import { Playlist } from "../models/user.model.js";
 const facialRecognition = async (req, res) => {
   try {
     const facialExpression = req.file;
-
     if (!facialExpression) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
     console.log("Uploading image to Cloudinary...");
-    console.log("File path before upload:", facialExpression.path);
     const cloudinaryResponse = await uploadOnCloudinary(facialExpression.path);
-
     if (!cloudinaryResponse || !cloudinaryResponse.secure_url) {
       return res
         .status(500)
         .json({ error: "Failed to upload image to Cloudinary" });
     }
 
-    const imageUrl = cloudinaryResponse.secure_url; // Cloudinary image URL
+    const imageUrl = cloudinaryResponse.secure_url;
     console.log("Image uploaded to Cloudinary:", imageUrl);
+
+    // Convert the image URL to Base64 with MIME type
+    const base64Image = await getBase64FromUrl(
+      imageUrl,
+      facialExpression.mimetype
+    );
+    if (!base64Image) {
+      return res
+        .status(500)
+        .json({ error: "Failed to convert image to Base64" });
+    }
+
+    console.log("Sending Base64 image to Gemini AI...");
 
     const systemMessage =
       "Analyze the human expression in the provided image and respond with only ONE word: happy, sad, energetic, calm, or romantic. Do not provide any extra text.";
@@ -32,14 +42,12 @@ const facialRecognition = async (req, res) => {
 
     const imagePart = {
       inlineData: {
-        data: imageUrl, // Send the Cloudinary URL instead of local file data
+        data: base64Image, // 👈 Now includes MIME type
         mimeType: facialExpression.mimetype,
       },
     };
 
-    console.log("Sending image to Gemini AI...");
     const result = await model.generateContent([systemMessage, imagePart]);
-
     console.log("Gemini AI Response:", result);
 
     const mood = result.response.candidates[0]?.content?.parts[0]?.text
@@ -79,7 +87,6 @@ const facialRecognition = async (req, res) => {
     }));
 
     console.log(playlists);
-
     await Playlist.insertMany(playlists);
     console.log("Playlists saved to the database.");
 
@@ -87,6 +94,18 @@ const facialRecognition = async (req, res) => {
   } catch (error) {
     console.error("Error in backend:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// Function to convert image URL to Base64 with MIME type
+const getBase64FromUrl = async (imageUrl, mimeType) => {
+  try {
+    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    const base64 = Buffer.from(response.data).toString("base64");
+    return `data:${mimeType};base64,${base64}`; // ✅ Add MIME type for Gemini API
+  } catch (error) {
+    console.error("Error converting image to Base64:", error);
+    return null;
   }
 };
 
