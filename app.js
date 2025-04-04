@@ -6,8 +6,9 @@ dotenv.config({ path: "./.env" });
 const app = express();
 app.use(
   cors({
-    origin: "*",
-    methods: ["POST"],
+    origin: "http://127.0.0.1:5500",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
   })
 );
 app.use(express.json());

@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as fs from "node:fs";
 import axios from "axios";
+import { Playlist } from "../models/user.model.js";
+
 const facialRecognition = async (req, res) => {
   try {
     const facialExpression = req.file;
@@ -17,7 +19,6 @@ const facialRecognition = async (req, res) => {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     function fileToGenerativePart(path, mimeType) {
-      console.log("Converting image to base64...");
       return {
         inlineData: {
           data: Buffer.from(fs.readFileSync(path)).toString("base64"),
@@ -36,20 +37,26 @@ const facialRecognition = async (req, res) => {
 
     console.log("Gemini AI Response:", result);
 
-    const mood = result.response.text();
-    if (!mood || !moodToGenre[mood.toLowerCase().trim()]) {
+    const mood = result.response.candidates[0]?.content?.parts[0]?.text
+      ?.trim()
+      .toLowerCase();
+
+    if (!mood || !moodToGenre[mood]) {
       console.error("Invalid mood detected:", mood);
       return res.status(400).json({
         error: "Invalid mood. Try: happy, sad, energetic, calm, romantic.",
       });
     }
 
-    console.log("🎵 Fetching Spotify playlist for mood:", mood);
+    console.log("Fetching Spotify playlist for mood:", mood);
     const accessToken = await getAccessToken();
-    const genre = moodToGenre[mood.toLowerCase()];
+    const genre = moodToGenre[mood];
     const randomOffset = Math.floor(Math.random() * 50);
+
     const response = await axios.get(
-      `https://api.spotify.com/v1/search?q=${genre}&type=playlist&limit=5&offset=${randomOffset}`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+        genre
+      )}&type=playlist&limit=10&offset=${randomOffset}`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
@@ -63,9 +70,18 @@ const facialRecognition = async (req, res) => {
       name: playlist.name || "Unknown Name",
       url: playlist.external_urls?.spotify || "#",
       image: playlist.images?.[0]?.url || "No Image Available",
+      mood, // Save the mood associated with the playlist
     }));
+
     console.log(playlists);
-    res.status(200).json({ playlist: playlists });
+
+    // Save playlists to the database
+    await Playlist.insertMany(playlists);
+    console.log("Playlists saved to the database.");
+
+    fs.unlinkSync(facialExpression.path);
+
+    return res.status(200).json({ playlists });
   } catch (error) {
     console.error("Error in backend:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -141,6 +157,10 @@ const getPlaylistByMood = async (req, res) => {
       image: playlist.images?.[0]?.url || "No Image Available",
     }));
 
+    // Save playlists to the database
+    await Playlist.insertMany(playlists);
+    console.log("Playlists saved to the database.");
+
     res
       .status(200)
       .json({ playlist: playlists, message: "Playlist fetched successfully." });
@@ -150,4 +170,25 @@ const getPlaylistByMood = async (req, res) => {
   }
 };
 
-export { facialRecognition, getPlaylistByMood };
+const getPlaylist = async (req, res) => {
+  try {
+    // Fetch all playlists from the database
+    const playlists = await Playlist.find();
+
+    if (!playlists || playlists.length === 0) {
+      return res.status(404).json({ message: "No playlists found." });
+    }
+
+    // Send the playlists as a response
+    res.status(200).json({ playlist: playlists });
+
+    // Delete all playlists from the database after sending the response
+    await Playlist.deleteMany();
+    console.log("All playlists deleted from the database.");
+  } catch (error) {
+    console.error("Error fetching playlists:", error.message);
+    res.status(500).json({ error: "Failed to fetch playlists from the database." });
+  }
+};
+
+export { facialRecognition, getPlaylistByMood, getPlaylist };
