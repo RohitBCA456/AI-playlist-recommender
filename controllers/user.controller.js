@@ -21,7 +21,6 @@ const facialRecognition = async (req, res) => {
     const imageUrl = cloudinaryResponse.secure_url;
     console.log("Image uploaded to Cloudinary:", imageUrl);
 
-    // Convert the image URL to Base64 with MIME type
     const base64Image = await getBase64FromUrl(
       imageUrl,
       facialExpression.mimetype
@@ -31,7 +30,6 @@ const facialRecognition = async (req, res) => {
       return res.status(500).json({ error: "Failed to convert image to Base64" });
     }
     
-    // Remove the prefix like "data:image/png;base64," and keep only the raw Base64
     const rawBase64 = base64Image.split(",")[1];
     
 
@@ -45,7 +43,7 @@ const facialRecognition = async (req, res) => {
 
     const imagePart = {
       inlineData: {
-        data: rawBase64, // 👈 Now includes MIME type
+        data: rawBase64,
         mimeType: facialExpression.mimetype,
       },
     };
@@ -100,12 +98,11 @@ const facialRecognition = async (req, res) => {
   }
 };
 
-// Function to convert image URL to Base64 with MIME type
 const getBase64FromUrl = async (imageUrl, mimeType) => {
   try {
     const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
     const base64 = Buffer.from(response.data).toString("base64");
-    return `data:${mimeType};base64,${base64}`; // ✅ Add MIME type for Gemini API
+    return `data:${mimeType};base64,${base64}`;
   } catch (error) {
     console.error("Error converting image to Base64:", error);
     return null;
@@ -167,7 +164,7 @@ const getPlaylistByMood = async (req, res) => {
 
     const randomOffset = Math.floor(Math.random() * 50);
     const response = await axios.get(
-      `https://api.spotify.com/v1/search?q=genre:${genre}&type=playlist&limit=5&offset=${randomOffset}`,
+      `https://api.spotify.com/v1/search?q=genre:${genre}&type=playlist&limit=10&offset=${randomOffset}`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
@@ -181,7 +178,6 @@ const getPlaylistByMood = async (req, res) => {
       image: playlist.images?.[0]?.url || "No Image Available",
     }));
 
-    // Save playlists to the database
     await Playlist.insertMany(playlists);
     console.log("Playlists saved to the database.");
 
@@ -196,17 +192,14 @@ const getPlaylistByMood = async (req, res) => {
 
 const getPlaylist = async (req, res) => {
   try {
-    // Fetch all playlists from the database
     const playlists = await Playlist.find();
 
     if (!playlists || playlists.length === 0) {
       return res.status(404).json({ message: "No playlists found." });
     }
 
-    // Send the playlists as a response
     res.status(200).json({ playlist: playlists });
 
-    // Delete all playlists from the database after sending the response
     await Playlist.deleteMany();
     console.log("All playlists deleted from the database.");
   } catch (error) {
