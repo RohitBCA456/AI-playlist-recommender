@@ -65,7 +65,7 @@ const facialRecognition = async (req, res) => {
     console.log("Fetching Spotify playlist for mood:", mood);
     const accessToken = await getAccessToken();
     const genre = moodToGenre[mood];
-    const randomOffset = Math.floor(Math.random() * 50);
+    const randomOffset = Math.floor(Math.random() * 100);
 
     const response = await axios.get(
       `https://api.spotify.com/v1/search?q=${encodeURIComponent(
@@ -86,8 +86,6 @@ const facialRecognition = async (req, res) => {
       image: playlist.images?.[0]?.url || "No Image Available",
       mood,
     }));
-
-    console.log(playlists);
     await Playlist.insertMany(playlists);
     console.log("Playlists saved to the database.");
 
