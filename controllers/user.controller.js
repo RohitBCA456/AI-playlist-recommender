@@ -139,21 +139,6 @@ const moodToGenre = {
   energetic: "workout",
   calm: "chill",
   romantic: "romance",
-  angry: "rock",
-  nostalgic: "retro",
-  focused: "lofi",
-  excited: "dance",
-  lazy: "ambient",
-  anxious: "piano",
-  hopeful: "indie",
-  lonely: "blues",
-  confident: "hip hop",
-  inspired: "instrumental",
-  moody: "alternative",
-  dreamy: "synthwave",
-  playful: "k-pop",
-  heartbroken: "r&b",
-  adventurous: "epic"
 };
 
 
