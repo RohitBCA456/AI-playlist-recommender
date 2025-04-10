@@ -61,7 +61,6 @@ const facialRecognition = async (req, res) => {
         error: "Invalid mood. Try: happy, sad, energetic, calm, romantic.",
       });
     }
-aq
     console.log("Fetching Spotify playlist for mood:", mood);
     const accessToken = await getAccessToken();
     const genre = moodToGenre[mood];
