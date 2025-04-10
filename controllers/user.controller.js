@@ -135,26 +135,27 @@ const getAccessToken = async () => {
 
 const moodToGenre = {
   happy: "pop",
-  sad: "acoustic",
-  energetic: "workout",
+  sad: "sad",
+  energetic: "work-out",
   calm: "chill",
   romantic: "romance",
-  angry: "rock",
-  nostalgic: "retro",
-  focused: "lofi",
+  angry: "metal",
+  nostalgic: "classic-rock",
+  focused: "study",
   excited: "dance",
   lazy: "ambient",
   anxious: "piano",
   hopeful: "indie",
   lonely: "blues",
-  confident: "hip hop",
-  inspired: "instrumental",
+  confident: "hip-hop",
+  inspired: "classical",
   moody: "alternative",
-  dreamy: "synthwave",
+  dreamy: "synth-pop",
   playful: "k-pop",
-  heartbroken: "r&b",
-  adventurous: "epic"
+  heartbroken: "r-n-b",
+  adventurous: "rock"
 };
+
 
 
 const getPlaylistByMood = async (req, res) => {
