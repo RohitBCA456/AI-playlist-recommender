@@ -88,7 +88,7 @@ const facialRecognition = async (req, res) => {
     await Playlist.insertMany(playlists);
     console.log("Playlists saved to the database.");
 
-    return res.status(200).json({ playlists, mood: mood });
+    return res.status(200).json({ playlists, mood });
   } catch (error) {
     console.error("Error in backend:", error);
     res.status(500).json({ error: "Internal Server Error" });
