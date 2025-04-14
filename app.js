@@ -4,7 +4,7 @@ import cors from "cors";
 
 const app = express();
 app.use(cors({
-  origin: "https://yourmoodplaylist.netlify.app",
+  origin: "https://spotify-frontend-lemon.vercel.app",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Accept", "Authorization"],
