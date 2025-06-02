@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 const PlaylistSchema = new mongoose.Schema(
   {
     userId: {
-      type: String,
-      required: true,
+      type: mongoose.Schema.ObjectId,
+      ref: 'User',
     },
     name: {
       type: String,

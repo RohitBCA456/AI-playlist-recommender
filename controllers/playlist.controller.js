@@ -81,7 +81,15 @@ const facialRecognition = async (req, res) => {
       (item) => item !== null
     );
 
+    const userId = req.user?._id;
+    console.log(userId);
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
     const playlists = validPlaylists.map((playlist) => ({
+      userId: userId,
       name: playlist.name || "Unknown Name",
       url: playlist.external_urls?.spotify || "#",
       image: playlist.images?.[0]?.url || "No Image Available",
@@ -187,6 +195,7 @@ const getPlaylistByMood = async (req, res) => {
     );
 
     const userId = req.user?._id;
+    console.log(userId);
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -214,12 +223,12 @@ const getPlaylistByMood = async (req, res) => {
 const getPlaylist = async (req, res) => {
   try {
     const userId = req.user?._id;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized. No user ID found." });
     }
 
-    const playlists = await Playlist.find(userId);
+    // Find all playlists for the current user
+    const playlists = await Playlist.find({ userId });
 
     if (!playlists || playlists.length === 0) {
       return res.status(404).json({ message: "No playlists found." });
@@ -227,12 +236,10 @@ const getPlaylist = async (req, res) => {
 
     res.status(200).json({ playlist: playlists });
 
-    await Playlist.deleteMany();
+    await Playlist.deleteMany({ userId });
   } catch (error) {
     console.error("Error fetching playlists:", error.message);
-    res
-      .status(500)
-      .json({ error: "Failed to fetch playlists from the database." });
+    res.status(500).json({ error: "Failed to fetch playlists from the database." });
   }
 };
 

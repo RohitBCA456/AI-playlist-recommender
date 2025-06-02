@@ -5,7 +5,7 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.post("/cameraData", upload.single("image"), facialRecognition);
+router.post("/cameraData", upload.single("image"), verifyJWT, facialRecognition);
 router.route("/playlistByMood").post(verifyJWT, getPlaylistByMood);
 router.route("/getPlaylist").get(verifyJWT, getPlaylist);
 
